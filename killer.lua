@@ -3,6 +3,7 @@ local killer = {}
 local killers = killers or {}
 local worldReference = nil
 local gameReference = nil
+local killerRestitution = 1.2
 
 function killer.init(world, game)
     worldReference = world
@@ -51,6 +52,7 @@ function killer.spawnRandom()
     local fixture = love.physics.newFixture(body, shape)
 
     fixture:setUserData("killer")
+    fixture:setRestitution(killerRestitution) -- Apply bounciness
 
     table.insert(killers, { body = body, shape = shape, fixture = fixture, width = width, height = height })
 end
@@ -61,10 +63,30 @@ function killer.handleCollision(fixtureA, fixtureB, contact)
     for _, k in ipairs(killers) do
         -- Check if the collision involves a killer fixture
         if fixtureA == k.fixture or fixtureB == k.fixture then
-            print("Player hit a killer!") -- Debugging output
-            gameReference.playerHitKiller() -- Trigger player "death" event
+            local player = gameReference:getPlayer()
+
+            if not player then
+                print("ERROR: Player reference is nil in killer.handleCollision()")
+                return
+            end
+
+            local currentTime = love.timer.getTime()
+            -- If the player was hit less than 0.5 seconds ago, ignore this hit
+            if currentTime - player.lastHitTime < 0.5 then
+                print("Ignoring repeated hit within cooldown window.")
+                return
+            end
+            -- Update last hit time
+            player.lastHitTime = currentTime
+
+            if player.getArmour() > 0 then
+                print("Player hit a killer but has armour! Armour reduced by 1.")
+                player.removeArmour()
+            else
+                gameReference.playerHitKiller() -- Normal death
+            end
+            return
         end
-        return
     end
 end
 

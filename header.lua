@@ -2,11 +2,17 @@ local header = {}
 local runReference = nil
 local startTime = nil
 local levelsCleared = 0 -- Tracks completed levels
+local armourIcon = nil -- Store armour icon reference
+local playerReference = nil
 
-function header.init(run)
+function header.init(run, player)
     runReference = run
+    playerReference = player -- Store reference to player
     startTime = love.timer.getTime()
     levelsCleared = 0 -- Reset level count when a new run starts
+
+    -- Load the armour icon
+    armourIcon = love.graphics.newImage("Assets/Images/ArmourIcon.png")
 end
 
 function header.incrementLevel()
@@ -48,6 +54,20 @@ function header.draw(gameState, platformInventory)
         love.graphics.rectangle("fill", startX + (spacing * 2), 7, boxSize, boxSize)
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf(platformInventory.ice, startX + (spacing * 2) + boxSize + 5, 12, 30, "left")
+
+        if playerReference then
+            local armourCount = playerReference.getArmour()
+            if armourCount > 0 then
+                local armourX = startX + (spacing * 3)
+                love.graphics.setColor(1, 1, 1) -- Full color
+                local iconSize = 20 -- New fixed size for consistency
+                local scaleFactor = iconSize / armourIcon:getWidth() -- Scale based on width
+                love.graphics.draw(armourIcon, armourX, 7, 0, scaleFactor, scaleFactor)
+        
+                -- Draw armour count beside the icon
+                love.graphics.printf(armourCount, armourX + boxSize, 12, 30, "left")
+            end
+        end
 
         -- Draw Level in the center
         love.graphics.printf("Level: " .. levelsCleared, 350, 10, 100, "center")

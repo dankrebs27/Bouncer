@@ -4,6 +4,8 @@ local initialVelocity = {x = 0, y = 0} -- Default initial velocity
 local bounciness = 0.8
 local playerImage = nil
 local imageScale = 1
+player.armour = 1
+player.lastHitTime = 0
 
 function player.init(world)
     -- Load the ball image
@@ -39,6 +41,41 @@ end
 function player.reset()
     player.body:setPosition(50, 50)
     player.body:setLinearVelocity(0, 0)
+end
+
+function player.setArmour(value)
+    player.armour = math.max(0, value) -- Ensure armour is never negative
+end
+
+function player.getArmour()
+    return player.armour
+end
+
+-- Function to remove 1 armour
+function player.removeArmour()
+    player.armour = player.armour - 1
+end
+
+function player.hitKiller()
+    local currentTime = love.timer.getTime() -- Get the current time in seconds
+
+    -- If the player was hit less than 0.5 seconds ago, ignore this hit
+    if currentTime - player.lastHitTime < 0.5 then
+        print("Ignoring repeated hit within cooldown window.")
+        return
+    end
+
+    -- Update last hit time
+    player.lastHitTime = currentTime
+
+    if player.armour > 0 then
+        print("Player hit a killer but has armour! Armour reduced by 1.")
+        player.armour = player.armour - 1
+        return
+    end
+
+    -- If no armour, normal death behavior
+    --game.playerHitKiller()
 end
 
 function player.isBelowScreen()

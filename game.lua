@@ -364,5 +364,9 @@ function game.playerHitKiller()
     end
 end
 
+function game.getPlayer()
+    return player
+end
+
 
 return game

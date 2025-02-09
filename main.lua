@@ -38,7 +38,7 @@ function love.load()
     star.init(player)
     drawer.init(platform, boons) -- Pass the platform module to drawer
     trajectory.init({ gravity = { 0, 500 } })
-    header.init(run) -- Initialize the header with run data
+    header.init(run, player) -- Initialize the header with run data
 
     -- Register collision callback for the physics world
     game.world:setCallbacks(platform.handleCollision, nil, nil, killer.handleCollision)
