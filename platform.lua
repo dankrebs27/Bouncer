@@ -22,9 +22,9 @@ local currentPlatformType = "base"
 
 -- Bounciness values for different platform types
 local platformBounciness = {
-    base = 0.8,   -- Regular bounce
-    ice = 0.2,    -- 25% bounce
-    power = 1.2   -- 150% bounce
+    base = .9,
+    ice = 0.2,
+    power = 1.3
 }
 
 local platformColors = {

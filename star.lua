@@ -33,6 +33,7 @@ function star.update(dt)
     local captureRadius = star.player.getCaptureRadius()
 
     if not captureRadius then
+        print(star.player:getCaptureRadius())
         print("Warning: getCaptureRadius() returned nil. Defaulting to 30.")
         captureRadius = 30 -- Set a fallback value to prevent crash
     end

@@ -4,6 +4,7 @@ local initialVelocity = {x = 0, y = 0} -- Default initial velocity
 local bounciness = 0.8
 local playerImage = nil
 local imageScale = 1
+local baseRadius = 30
 player.armour = 1
 player.lastHitTime = 0
 player.captureRadius = baseRadius -- Default capture radius same as ball radius
@@ -33,6 +34,13 @@ end
 function player.draw()
     if player.body and playerImage then
         local x, y = player.body:getX(), player.body:getY()
+
+        -- **Draw the Capture Radius (Faint Yellow Circle)**
+        love.graphics.setColor(1, 1, 0, 0.3) -- Yellow with low opacity
+        love.graphics.setLineWidth(2) -- Thin line
+        love.graphics.circle("line", x, y, player.captureRadius)
+
+        -- **Draw the Player Ball**
         love.graphics.setColor(1, 1, 1) -- Ensure the sprite is drawn in full color
         love.graphics.draw(playerImage, x, y, 0, imageScale, imageScale, playerImage:getWidth() / 2, playerImage:getHeight() / 2)
     end
