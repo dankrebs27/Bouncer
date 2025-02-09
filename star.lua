@@ -24,15 +24,33 @@ function star.resetToInitialPositions()
 end
 
 function star.update(dt)
+    if not star.player or not star.player.getCaptureRadius then
+        print("Error: Player reference is nil or getCaptureRadius() is missing!")
+        return
+    end
+
     local px, py = star.player.body:getX(), star.player.body:getY()
+    local captureRadius = star.player.getCaptureRadius()
+
+    if not captureRadius then
+        print("Warning: getCaptureRadius() returned nil. Defaulting to 30.")
+        captureRadius = 30 -- Set a fallback value to prevent crash
+    end
+
     for i = #stars, 1, -1 do
         local s = stars[i]
-        if math.sqrt((px - s.x)^2 + (py - s.y)^2) < 30 then -- Collision radius
+        local distance = math.sqrt((px - s.x)^2 + (py - s.y)^2)
+
+        -- **Capture stars inside the capture radius**
+        if distance < captureRadius then
             table.remove(stars, i)
             love.audio.play(love.audio.newSource("Assets/Sound/Tink1.mp3", "static"))
+            print("Star captured by player!")
         end
     end
 end
+
+
 
 function star.draw()
     for _, s in ipairs(stars) do

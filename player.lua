@@ -6,6 +6,7 @@ local playerImage = nil
 local imageScale = 1
 player.armour = 1
 player.lastHitTime = 0
+player.captureRadius = baseRadius -- Default capture radius same as ball radius
 
 function player.init(world)
     -- Load the ball image
@@ -41,6 +42,20 @@ end
 function player.reset()
     player.body:setPosition(50, 50)
     player.body:setLinearVelocity(0, 0)
+end
+
+function player.increaseCaptureRadius(amount)
+    player.captureRadius = player.captureRadius + amount
+    print("Capture Radius increased to:", player.captureRadius)
+end
+
+function player.decreaseCaptureRadius(amount)
+    player.captureRadius = math.max(baseRadius, player.captureRadius - amount) -- Prevent below base radius
+    print("Capture Radius decreased to:", player.captureRadius)
+end
+
+function player.getCaptureRadius()
+    return player.captureRadius
 end
 
 function player.setArmour(value)
