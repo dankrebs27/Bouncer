@@ -5,8 +5,9 @@ local star
 local trajectory
 local roomType -- Tracks the current room type
 local run -- Tracks the player's current run data
+local rewards
 
-function game.init(playerModule, platformModule, starModule, trajectoryModule, boonsModule, killerModule, headerModule)
+function game.init(playerModule, platformModule, starModule, trajectoryModule, boonsModule, killerModule, headerModule, rewardsModule)
     player = playerModule
     platform = platformModule
     star = starModule
@@ -15,6 +16,7 @@ function game.init(playerModule, platformModule, starModule, trajectoryModule, b
     killer = killerModule
     header = headerModule
     drawer = drawerModule
+    rewards = rewardsModule
 
     love.physics.setMeter(64)
     game.gravity = 600 -- Default gravity, can be adjusted
@@ -207,25 +209,35 @@ function game.drawUI()
     end
 
     -- Draw trajectory if paused and not in a treasure room
-    if game.isPaused and roomType ~= "treasure" then
-        trajectory.calculate(player, platform.getPlatforms())
-        trajectory.draw()
-    end
-
-    -- Draw level-cleared message
     if game.levelCleared and roomType ~= "treasure" then
         love.graphics.setColor(0, 0, 0, 0.8)
-        love.graphics.rectangle("fill", 200, 200, 400, 200)
+        love.graphics.rectangle("fill", 200, 200, 400, 300) -- Increased height for rewards
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf("Level Cleared!", 200, 220, 400, "center")
 
-        -- Draw "Continue" button
+        -- **Draw Rewards**
+        if game.rewardsSelection then
+            for i, reward in ipairs(game.rewardsSelection) do
+                local yOffset = 260 + (i * 40)
+
+                -- Highlight selected reward
+                if game.selectedReward == i then
+                    love.graphics.setColor(1, 1, 0.5) -- Light yellow highlight
+                else
+                    love.graphics.setColor(1, 1, 1) -- Default white
+                end
+                
+                love.graphics.printf(reward.name, 250, yOffset, 300, "center")
+            end
+        end
+
+        -- **Draw "Continue" button**
         love.graphics.setColor(0.5, 0.5, 0.5)
-        love.graphics.rectangle("fill", 300, 320, 200, 50)
+        love.graphics.rectangle("fill", 300, 450, 200, 50)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.printf("Continue", 300, 335, 200, "center")
-    elseif game.showMessage then
-        love.graphics.printf(game.showMessage, 0, 250, 800, "center")
+        love.graphics.printf("Continue", 300, 465, 200, "center")
+    --elseif game.showMessage then
+    --    love.graphics.printf(game.showMessage, 0, 250, 800, "center")
     end
 end
 
@@ -244,6 +256,9 @@ function game.updateChallengeRoom()
     elseif star.allCollected() then
         game.levelCleared = true
         game.isPaused = true
+
+        game.rewardsSelection = rewards.getRandomRewards()
+        game.selectedReward = nil
     end
 end
 
@@ -295,12 +310,36 @@ function game.handleMouseClick(x, y)
     end
     
     if game.levelCleared then
-        if x >= 300 and x <= 500 and y >= 320 and y <= 370 then
+        -- **Check if a reward is clicked**
+        if game.rewardsSelection then
+            for i, reward in ipairs(game.rewardsSelection) do
+                local rewardY = 260 + (i * 40)
+                if x >= 250 and x <= 550 and y >= rewardY and y <= rewardY + 30 then
+                    game.selectedReward = i -- **Set the selected reward**
+                    print("Selected reward:", reward.name)
+                    return true
+                end
+            end
+        end
+
+        -- **Check if "Continue" is clicked**
+        if x >= 300 and x <= 500 and y >= 450 and y <= 500 then
+            if game.selectedReward and game.rewardsSelection then
+                -- **Apply the selected reward**
+                rewards.applyReward(game.rewardsSelection[game.selectedReward].name)
+            end
+            
+            -- **Return to map after selecting reward**
+            gameState = "map"
+            print("Returning to map...")
+            game.levelCleared = false
+            game.isPaused = false
             if game.onLevelCompleteCallback then
                 game.onLevelCompleteCallback()
             end
             return true
         end
+
     elseif x >= 700 and x <= 780 then
         if y >= 50 and y <= 80 then
             local clearedCounts = platform.clear()

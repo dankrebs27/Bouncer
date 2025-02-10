@@ -132,22 +132,39 @@ function platform.startDrawing(x, y)
         end
     end
 
-    -- If no platform interaction, start drawing a new platform
-    if gameReference and gameReference.usePlatform(currentPlatformType) then
-        isDrawing = true
-        currentPlatform = {
-            x1 = x,
-            y1 = y,
-            x2 = x,
-            y2 = y,
-            type = currentPlatformType
-        }
-    end
+    -- **Remove inventory deduction from here**
+    isDrawing = true
+    currentPlatform = {
+        x1 = x,
+        y1 = y,
+        x2 = x,
+        y2 = y,
+        type = currentPlatformType
+    }
 end
+
 
 function platform.finishDrawing()
     if isDrawing and currentPlatform then
-        -- Create a static platform as a physics body
+        -- Calculate platform length
+        local dx = currentPlatform.x2 - currentPlatform.x1
+        local dy = currentPlatform.y2 - currentPlatform.y1
+        local length = math.sqrt(dx^2 + dy^2)
+
+        -- **Check if platform is too short**
+        if length <= 15 then
+            print("Platform too short! Deleting...")
+            isDrawing = false
+            currentPlatform = nil
+            return -- **Exit without subtracting inventory**
+        end
+
+        -- **Deduct inventory here (only if valid)**
+        if gameReference and gameReference.platformInventory[currentPlatform.type] then
+            gameReference.platformInventory[currentPlatform.type] = gameReference.platformInventory[currentPlatform.type] - 1
+        end
+
+        -- **Create a static platform as a physics body**
         local body = love.physics.newBody(platform.world, 0, 0, "static")
         local shape = love.physics.newEdgeShape(currentPlatform.x1, currentPlatform.y1, currentPlatform.x2, currentPlatform.y2)
         local fixture = love.physics.newFixture(body, shape)
@@ -172,14 +189,14 @@ function platform.finishDrawing()
 
         isDrawing = false
         currentPlatform = nil
-
     elseif selectedPlatform then
         -- Release interaction with a platform
         selectedPlatform = nil
         interactionType = nil
     end
-
 end
+
+
 
 function platform.updatePhysics(p)
     if p.body then
