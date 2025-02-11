@@ -68,8 +68,6 @@ function love.draw()
     if gameState == "menu" then
         menu.draw()
     else
-        header.draw(gameState, game.platformInventory) -- Only draws when in map or play mode
-
         if gameState == "map" then
             map.draw()
         elseif gameState == "play" then
@@ -80,6 +78,7 @@ function love.draw()
             game.drawUI()
             drawer.draw()
         end
+        header.draw(gameState, game.platformInventory) -- Only draws when in map or play mode
     end
 end
 

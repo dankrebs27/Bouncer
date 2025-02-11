@@ -9,6 +9,16 @@ player.armour = 1
 player.lastHitTime = 0
 player.captureRadius = baseRadius -- Default capture radius same as ball radius
 
+-- **Armour Break Animation Variables**
+local armourBreakDuration = 0.5 -- **Time before animations fade out (modifiable)**
+local armourBreakImages = {
+    top = love.graphics.newImage("Assets/Images/armourbreak-top.png"),
+    right = love.graphics.newImage("Assets/Images/armourbreak-right.png"),
+    bottom = love.graphics.newImage("Assets/Images/armourbreak-bottom.png"),
+    left = love.graphics.newImage("Assets/Images/armourbreak-left.png")
+}
+local armourBreakAnimations = {} -- **Stores active animations**
+
 function player.init(world)
     -- Load the ball image
     playerImage = love.graphics.newImage("Assets/Images/redball.png")
@@ -19,7 +29,7 @@ function player.init(world)
     local imageHeight = playerImage:getHeight()
     imageScale = (ballRadius * 2) / imageWidth -- Scale to match 40px diameter
     
-    player.body = love.physics.newBody(world, 50, 80, "dynamic")
+    player.body = love.physics.newBody(world, 100, 80, "dynamic")
     player.shape = love.physics.newCircleShape(ballRadius)
     player.fixture = love.physics.newFixture(player.body, player.shape, 1)
     player.fixture:setRestitution(0)
@@ -29,6 +39,19 @@ end
 function player.update(dt)
     -- Ensure the ball's rotation does not affect gameplay
     --player.body:setAngularVelocity(0) -- Stop angular velocity
+
+    for i = #armourBreakAnimations, 1, -1 do
+        local anim = armourBreakAnimations[i]
+        anim.time = anim.time + dt
+        anim.alpha = 1 - (anim.time / armourBreakDuration) -- **Fade out over time**
+        anim.x = anim.x + (anim.dx * dt * 2) -- **Move outward**
+        anim.y = anim.y + (anim.dy * dt * 2)
+
+        -- **Remove animation when time is up**
+        if anim.time >= armourBreakDuration then
+            table.remove(armourBreakAnimations, i)
+        end
+    end
 end
 
 function player.draw()
@@ -44,11 +67,19 @@ function player.draw()
         love.graphics.setColor(1, 1, 1) -- Ensure the sprite is drawn in full color
         love.graphics.draw(playerImage, x, y, 0, imageScale, imageScale, playerImage:getWidth() / 2, playerImage:getHeight() / 2)
     end
+
+    for _, anim in ipairs(armourBreakAnimations) do
+        love.graphics.setColor(1, 1, 1, anim.alpha) -- **Apply fading effect**
+        love.graphics.draw(anim.img, anim.x, anim.y, 0, 1, 1, anim.img:getWidth() / 2, anim.img:getHeight() / 2)
+    end
+
+    -- Reset color after drawing animations
+    love.graphics.setColor(1, 1, 1)
 end
 
 --Can I remove this?
 function player.reset()
-    player.body:setPosition(50, 50)
+    player.body:setPosition(100, 50)
     player.body:setLinearVelocity(0, 0)
 end
 
@@ -130,9 +161,20 @@ function player.setInitialVelocity(vx, vy)
 end
 
 function player.reset(x, y)
-    player.body:setPosition(x or 50, y or 80)
+    player.body:setPosition(x or 100, y or 80)
     player.body:setLinearVelocity(0, 0)
     player.body:setAngularVelocity(0) -- Reset angular velocity
 end
+
+function player.triggerArmourBreakAnimation()
+    local x, y = player.body:getX(), player.body:getY()
+
+    -- **Spawn four armour break pieces, moving in different directions**
+    table.insert(armourBreakAnimations, { img = armourBreakImages.top, x = x, y = y - 20, dx = 0, dy = -20, alpha = 1, time = 0 })
+    table.insert(armourBreakAnimations, { img = armourBreakImages.right, x = x + 20, y = y, dx = 20, dy = 0, alpha = 1, time = 0 })
+    table.insert(armourBreakAnimations, { img = armourBreakImages.bottom, x = x, y = y + 20, dx = 0, dy = 20, alpha = 1, time = 0 })
+    table.insert(armourBreakAnimations, { img = armourBreakImages.left, x = x - 20, y = y, dx = -20, dy = 0, alpha = 1, time = 0 })
+end
+
 
 return player

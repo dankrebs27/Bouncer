@@ -57,8 +57,6 @@ function killer.spawnRandom()
     table.insert(killers, { body = body, shape = shape, fixture = fixture, width = width, height = height })
 end
 
-
-
 function killer.handleCollision(fixtureA, fixtureB, contact)
     for _, k in ipairs(killers) do
         -- Check if the collision involves a killer fixture
@@ -81,6 +79,7 @@ function killer.handleCollision(fixtureA, fixtureB, contact)
 
             if player.getArmour() > 0 then
                 print("Player hit a killer but has armour! Armour reduced by 1.")
+                player.triggerArmourBreakAnimation()
                 player.removeArmour()
             else
                 gameReference.playerHitKiller() -- Normal death

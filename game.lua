@@ -37,9 +37,26 @@ function game.init(playerModule, platformModule, starModule, trajectoryModule, b
     game.boonPopup = nil
     roomType = "challenge" -- Default room type
     run = nil -- Initialize the run data
-
     trajectory.init({ gravity = {0, 500} }) -- Separate world for trajectory simulation
     killer.init(game.world, game)
+
+    -- **Wall properties**
+    local wallWidth = 10
+    local wallRestitution = 0.9 -- Same as base platform
+
+    -- **Create Left Wall**
+    game.leftWall = love.physics.newBody(game.world, wallWidth / 2, 300, "static")
+    game.leftWallShape = love.physics.newRectangleShape(wallWidth, 600)
+    game.leftWallFixture = love.physics.newFixture(game.leftWall, game.leftWallShape)
+    game.leftWallFixture:setRestitution(wallRestitution)
+    game.leftWallFixture:setUserData("wall")
+
+    -- **Create Right Wall**
+    game.rightWall = love.physics.newBody(game.world, 800 - (wallWidth / 2), 300, "static")
+    game.rightWallShape = love.physics.newRectangleShape(wallWidth, 600)
+    game.rightWallFixture = love.physics.newFixture(game.rightWall, game.rightWallShape)
+    game.rightWallFixture:setRestitution(wallRestitution)
+    game.rightWallFixture:setUserData("wall")
 
     -- Register a new global collision handler
     game.world:setCallbacks(platform.handleCollision, nil, nil, killer.handleCollision)
@@ -159,6 +176,14 @@ function game.update(dt)
 end
 
 function game.drawUI()
+    -- Draw Left & Right Walls (ensure they don't overlap header)
+    love.graphics.setColor(0.5, 0.5, 0.5) -- Gray color for walls
+    love.graphics.rectangle("fill", 0, 40, 10, 560)   -- Left wall (from y = 40 down)
+    love.graphics.rectangle("fill", 790, 40, 10, 560) -- Right wall
+
+    -- Reset color to white
+    love.graphics.setColor(1, 1, 1)
+    
     local buttonYStart = 50 -- Position buttons below the header
     game.drawButton(700, buttonYStart, "Clear")     -- Draw "Clear" button
     game.drawButton(700, buttonYStart + 40, "Start")     -- Draw "Start" button
@@ -236,8 +261,10 @@ function game.drawUI()
         love.graphics.rectangle("fill", 300, 450, 200, 50)
         love.graphics.setColor(1, 1, 1)
         love.graphics.printf("Continue", 300, 465, 200, "center")
-    --elseif game.showMessage then
-    --    love.graphics.printf(game.showMessage, 0, 250, 800, "center")
+    elseif game.showMessage then
+        love.graphics.setColor(1, 0, 0) -- Red text for visibility
+        love.graphics.printf(game.showMessage, 0, 250, 800, "center")
+        love.graphics.setColor(1, 1, 1) -- Reset color to white
     end
 end
 
@@ -357,7 +384,7 @@ end
 
 function game.loadChallengeRoom()
     roomType = "challenge" -- Set the room type
-    player.reset(50, 80) -- Position for challenge rooms
+    player.reset(100, 80) -- Position for challenge rooms
     game.generateStars() -- Generate stars for the challenge room
     game.isPaused = true -- Pause the game initially
 
