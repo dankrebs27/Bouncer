@@ -2,21 +2,21 @@ local game = {}
 local platform
 local player
 local star
-local trajectory
 local roomType -- Tracks the current room type
 local run -- Tracks the player's current run data
 local rewards
+local trajectory
 
-function game.init(playerModule, platformModule, starModule, trajectoryModule, boonsModule, killerModule, headerModule, rewardsModule)
+function game.init(playerModule, platformModule, starModule, boonsModule, killerModule, headerModule, rewardsModule, trajectoryModule)
     player = playerModule
     platform = platformModule
     star = starModule
-    trajectory = trajectoryModule
     boons = boonsModule
     killer = killerModule
     header = headerModule
     drawer = drawerModule
     rewards = rewardsModule
+    trajectory = trajectoryModule
 
     love.physics.setMeter(64)
     game.gravity = 600 -- Default gravity, can be adjusted
@@ -37,7 +37,6 @@ function game.init(playerModule, platformModule, starModule, trajectoryModule, b
     game.boonPopup = nil
     roomType = "challenge" -- Default room type
     run = nil -- Initialize the run data
-    trajectory.init({ gravity = {0, 500} }) -- Separate world for trajectory simulation
     killer.init(game.world, game)
 
     -- **Wall properties**
@@ -160,6 +159,10 @@ function game.update(dt)
         print(gameState)
     end
 
+    if game.isPaused then
+        trajectory.calculate(player, platform.getPlatforms())
+    end
+
     -- Room-specific logic
     if roomType == "treasure" then
         game.updateTreasureRoom()
@@ -198,6 +201,11 @@ function game.drawUI()
 
     love.graphics.printf("Tries: " .. game.strikes, 700, 140, 80, "center")
 
+
+    if game.isPaused then
+        trajectory.draw()
+    end
+
     -- Draw room-specific elements
     -- Treasure room stuff
     if roomType == "treasure" then
@@ -233,7 +241,7 @@ function game.drawUI()
         star.draw()
     end
 
-    -- Draw trajectory if paused and not in a treasure room
+    -- Draw  if paused and not in a treasure room
     if game.levelCleared and roomType ~= "treasure" then
         love.graphics.setColor(0, 0, 0, 0.8)
         love.graphics.rectangle("fill", 200, 200, 400, 300) -- Increased height for rewards
@@ -398,6 +406,8 @@ function game.loadChallengeRoom()
     killer.clear() -- Remove old killers
     platform.clear() -- Ensure old platforms are removed
     killer.spawnRandom() -- Spawn a new killer
+
+    trajectory.calculate(player, platform.getPlatforms())
 end
 
 function game.loadTreasureRoom()
@@ -407,6 +417,8 @@ function game.loadTreasureRoom()
     game.isPaused = true -- Pause the game initially
 
     killer.clear()
+
+    trajectory.calculate(player, platform.getPlatforms())
 end
 
 function game.onLevelComplete(callback)

@@ -164,6 +164,11 @@ function player.reset(x, y)
     player.body:setPosition(x or 100, y or 80)
     player.body:setLinearVelocity(0, 0)
     player.body:setAngularVelocity(0) -- Reset angular velocity
+
+    -- **Recalculate trajectory after reset**
+    --if game.isPaused then
+    --    trajectory.calculate(player, platform.getPlatforms()) -- Ensure trajectory updates after death
+    --end
 end
 
 function player.triggerArmourBreakAnimation()

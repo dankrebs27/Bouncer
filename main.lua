@@ -4,13 +4,13 @@ local player = require("player")
 local star = require("star")
 local menu = require("menu")
 local map = require("map")
-local trajectory = require("trajectory")
 local run = require("run")
 local killer = require("killer")
 local drawer = require("drawer")
 local boons = require("boons")
 local header = require("header")
 local rewards = require("rewards")
+local trajectory = require("trajectory")
 
 
 local gameState = "menu" -- Possible states: "menu", "map", "play"
@@ -33,14 +33,15 @@ function love.load()
 
 
     -- Initialize game modules
-    game.init(player, platform, star, trajectory, boons, killer, header, rewards)
-    platform.init(game.world, game)
+    trajectory.init({ gravity = { 0, 420 } })
+    game.init(player, platform, star, boons, killer, header, rewards, trajectory)
+    platform.init(game.world, game, trajectory)
     player.init(game.world)
     star.init(player)
     drawer.init(platform, boons) -- Pass the platform module to drawer
-    trajectory.init({ gravity = { 0, 500 } })
     header.init(run, player) -- Initialize the header with run data
     rewards.init(game, player, run)
+
 
     -- Register collision callback for the physics world
     game.world:setCallbacks(platform.handleCollision, nil, nil, killer.handleCollision)

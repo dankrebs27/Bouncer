@@ -1,5 +1,4 @@
 local platform = {}
---local platforms = {}
 local platforms = platforms or {}
 local isDrawing = false
 local currentPlatform = nil
@@ -16,13 +15,14 @@ local bounceSounds = {
 }
 
 local gameReference = nil -- Reference to the game module
+local trajectory
 
 -- Default platform type
 local currentPlatformType = "base"
 
 -- Bounciness values for different platform types
 local platformBounciness = {
-    base = .9,
+    base = .85,
     ice = 0.2,
     power = 1.3
 }
@@ -33,9 +33,10 @@ local platformColors = {
     power = {0.8, 0.3, 1}   -- Bright purple
 }
 
-function platform.init(world, gameModule)
+function platform.init(world, gameModule, trajectoryModule)
     platform.world = world
     gameReference = gameModule -- Assign the game module reference
+    trajectory = trajectoryModule
 end
 
 function platform.update(dt)
@@ -87,6 +88,13 @@ function platform.update(dt)
 
         -- Update physics body of the platform
         platform.updatePhysics(selectedPlatform)
+
+        if gameReference.isPaused then
+            local player = gameReference.getPlayer()
+            if player then
+                trajectory.calculate(player, platforms) -- Ensure trajectory updates in real time
+            end
+        end
     end
 end
 
@@ -151,7 +159,7 @@ function platform.finishDrawing()
         local dy = currentPlatform.y2 - currentPlatform.y1
         local length = math.sqrt(dx^2 + dy^2)
 
-        -- **Check if platform is too short**
+        -- Check if platform is too short
         if length <= 15 then
             print("Platform too short! Deleting...")
             isDrawing = false
@@ -159,12 +167,12 @@ function platform.finishDrawing()
             return -- **Exit without subtracting inventory**
         end
 
-        -- **Deduct inventory here (only if valid)**
+        -- Deduct inventory here (only if valid)
         if gameReference and gameReference.platformInventory[currentPlatform.type] then
             gameReference.platformInventory[currentPlatform.type] = gameReference.platformInventory[currentPlatform.type] - 1
         end
 
-        -- **Create a static platform as a physics body**
+        -- Create a static platform as a physics body
         local body = love.physics.newBody(platform.world, 0, 0, "static")
         local shape = love.physics.newEdgeShape(currentPlatform.x1, currentPlatform.y1, currentPlatform.x2, currentPlatform.y2)
         local fixture = love.physics.newFixture(body, shape)
@@ -189,6 +197,16 @@ function platform.finishDrawing()
 
         isDrawing = false
         currentPlatform = nil
+
+        if gameReference and gameReference.getPlayer then
+            local player = gameReference.getPlayer()
+            if gameReference.isPaused then
+                trajectory.calculate(player, platforms) -- Ensure player is passed correctly
+            end
+        else
+            print("Error: gameReference.getPlayer() is missing in platform.finishDrawing()")
+        end
+
     elseif selectedPlatform then
         -- Release interaction with a platform
         selectedPlatform = nil
@@ -205,10 +223,6 @@ function platform.updatePhysics(p)
     p.body = love.physics.newBody(platform.world, 0, 0, "static")
     p.shape = love.physics.newEdgeShape(p.x1, p.y1, p.x2, p.y2)
     p.fixture = love.physics.newFixture(p.body, p.shape)
-
-    -- Debugging
-    --print("Updating platform physics for:", p.type)
-    --print("New restitution set:", platformBounciness[p.type])
 
     p.fixture:setRestitution(platformBounciness[p.type]) -- Update bounciness
 end
@@ -245,6 +259,13 @@ function platform.clear()
     end
 
     platforms = {}
+
+    if gameReference.isPaused then
+        local player = gameReference.getPlayer()
+        if player then
+            trajectory.calculate(player, platforms) -- ✅ Ensure trajectory updates after clearing
+        end
+    end
 
     return clearedCounts -- Return the count of cleared platforms
 end
