@@ -133,7 +133,7 @@ function player.hitKiller()
 end
 
 function player.isBelowScreen()
-    return player.body:getY() > 600
+    return player.body:getY() > 1200
 end
 
 function player.getBody()

@@ -1,5 +1,6 @@
 -- menu.lua
 local menu = {}
+local centerY = 600 -- Half of new screen height (1200 / 2)
 
 local buttons = {}
 
@@ -13,22 +14,28 @@ end
 
 function menu.draw()
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Main Menu", 0, 100, 800, "center")
+
+    love.graphics.printf("Main Menu", 0, centerY - 50, 800, "center") -- Move title up
     for _, button in ipairs(buttons) do
         love.graphics.setColor(0.5, 0.5, 0.5)
-        love.graphics.rectangle("fill", button.x, button.y, button.width, button.height)
+        love.graphics.rectangle("fill", button.x, button.y + centerY - 150, button.width, button.height)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.printf(button.label, button.x, button.y + 15, button.width, "center")
+        love.graphics.printf(button.label, button.x, button.y + centerY - 135, button.width, "center")
     end
 end
 
 function menu.handleClick(x, y)
     for _, button in ipairs(buttons) do
-        if x >= button.x and x <= button.x + button.width and y >= button.y and y <= button.y + button.height then
+        local adjustedY = button.y + centerY - 150 -- Match new vertical alignment
+
+        if x >= button.x and x <= button.x + button.width and
+           y >= adjustedY and y <= adjustedY + button.height then
             button.action()
+            return
         end
     end
 end
+
 
 function menu.startGame()
     menu.onStart()

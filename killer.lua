@@ -20,7 +20,7 @@ function killer.spawnRandom()
 
     while not validPosition and attempts < maxAttempts do
         x = math.random(50, 750 - width)
-        y = math.random(80, 500 - height)
+        y = math.random(80, 1100 - height) -- Updated to allow lower half spawning
         validPosition = true
     
         local leftEdge = x
@@ -28,22 +28,17 @@ function killer.spawnRandom()
         local topEdge = y
         local bottomEdge = y + height
     
-        -- Ensure none of the killer's edges are too close to any star
+        -- Ensure killers do not overlap stars
         for _, s in ipairs(gameReference.stars) do
             local starX, starY = s.x, s.y
-    
-            -- Check distance from each edge of the killer to the star's center
-            local distanceLeft = math.sqrt((leftEdge - starX)^2 + (y + height / 2 - starY)^2)
-            local distanceRight = math.sqrt((rightEdge - starX)^2 + (y + height / 2 - starY)^2)
-            local distanceTop = math.sqrt((x + width / 2 - starX)^2 + (topEdge - starY)^2)
-            local distanceBottom = math.sqrt((x + width / 2 - starX)^2 + (bottomEdge - starY)^2)
-    
-            if distanceLeft < 150 or distanceRight < 150 or distanceTop < 150 or distanceBottom < 150 then
+            local distance = math.sqrt((x - starX)^2 + (y - starY)^2)
+
+            if distance < 150 then
                 validPosition = false -- Too close, retry placement
                 break
             end
         end
-    
+
         attempts = attempts + 1
     end    
 
@@ -52,10 +47,11 @@ function killer.spawnRandom()
     local fixture = love.physics.newFixture(body, shape)
 
     fixture:setUserData("killer")
-    fixture:setRestitution(killerRestitution) -- Apply bounciness
+    fixture:setRestitution(killerRestitution) -- Keep bounciness
 
     table.insert(killers, { body = body, shape = shape, fixture = fixture, width = width, height = height })
 end
+
 
 function killer.handleCollision(fixtureA, fixtureB, contact)
     for _, k in ipairs(killers) do

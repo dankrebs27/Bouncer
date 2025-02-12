@@ -12,13 +12,12 @@ local header = require("header")
 local rewards = require("rewards")
 local trajectory = require("trajectory")
 
-
 local gameState = "menu" -- Possible states: "menu", "map", "play"
 local levelSelected = nil -- Track the selected level
 
 function love.load()
     love.window.setTitle("Draw Platforms Game")
-    love.window.setMode(800, 600)
+    love.window.setMode(800, 1200)
 
     -- Initialize menu
     menu.init()

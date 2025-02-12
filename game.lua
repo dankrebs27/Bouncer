@@ -4,6 +4,7 @@ local player
 local star
 local roomType -- Tracks the current room type
 local run -- Tracks the player's current run data
+local runData = {}
 local rewards
 local trajectory
 
@@ -36,23 +37,24 @@ function game.init(playerModule, platformModule, starModule, boonsModule, killer
     game.pendingReset = false
     game.boonPopup = nil
     roomType = "challenge" -- Default room type
-    run = nil -- Initialize the run data
+    --runData = run.getRunData()-- Initialize the run data
     killer.init(game.world, game)
 
-    -- **Wall properties**
+    --Wall properties
     local wallWidth = 10
+    local wallHeight = 1160 -- Extend walls to match new world height
     local wallRestitution = 0.9 -- Same as base platform
 
-    -- **Create Left Wall**
-    game.leftWall = love.physics.newBody(game.world, wallWidth / 2, 300, "static")
-    game.leftWallShape = love.physics.newRectangleShape(wallWidth, 600)
+    -- Create Left Wall
+    game.leftWall = love.physics.newBody(game.world, wallWidth / 2, 600, "static") -- Center wall vertically
+    game.leftWallShape = love.physics.newRectangleShape(wallWidth, wallHeight)
     game.leftWallFixture = love.physics.newFixture(game.leftWall, game.leftWallShape)
     game.leftWallFixture:setRestitution(wallRestitution)
     game.leftWallFixture:setUserData("wall")
 
-    -- **Create Right Wall**
-    game.rightWall = love.physics.newBody(game.world, 800 - (wallWidth / 2), 300, "static")
-    game.rightWallShape = love.physics.newRectangleShape(wallWidth, 600)
+    -- Create Right Wall
+    game.rightWall = love.physics.newBody(game.world, 800 - (wallWidth / 2), 600, "static") -- Center wall vertically
+    game.rightWallShape = love.physics.newRectangleShape(wallWidth, wallHeight)
     game.rightWallFixture = love.physics.newFixture(game.rightWall, game.rightWallShape)
     game.rightWallFixture:setRestitution(wallRestitution)
     game.rightWallFixture:setUserData("wall")
@@ -61,15 +63,19 @@ function game.init(playerModule, platformModule, starModule, boonsModule, killer
     game.world:setCallbacks(platform.handleCollision, nil, nil, killer.handleCollision)
 end
 
+function game.getRunData()
+    return run
+end
+
 function game.setRunData(newRun)
     run = newRun -- Store the current run data
     game.platformInventory = run.platformInventory
-    drawer.init(platform, boons) -- Initialize the drawer with the platform module
 end
 
 function game.getRunData()
     return run
 end
+
 
 function game.setRoomType(type)
     roomType = type
@@ -117,12 +123,13 @@ function game.generateStars(seed)
     game.stars = {}
     for i = 1, 3 do
         local x = math.random(50, 750)
-        local y = math.random(50, 550)
+        local y = math.random(50, 1100) -- Updated to allow stars in the lower half
         table.insert(game.stars, { x = x, y = y })
     end
 
     star.setPositions(game.stars)
 end
+
 
 function game.generateTargets()
     local selectedBoons = boons.getRandomBoons()
@@ -179,10 +186,10 @@ function game.update(dt)
 end
 
 function game.drawUI()
-    -- Draw Left & Right Walls (ensure they don't overlap header)
+    -- Draw Left & Right Walls (extend to full height)
     love.graphics.setColor(0.5, 0.5, 0.5) -- Gray color for walls
-    love.graphics.rectangle("fill", 0, 40, 10, 560)   -- Left wall (from y = 40 down)
-    love.graphics.rectangle("fill", 790, 40, 10, 560) -- Right wall
+    love.graphics.rectangle("fill", 0, 40, 10, 1160)   -- Left wall (from y = 40 down)
+    love.graphics.rectangle("fill", 790, 40, 10, 1160) -- Right wall
 
     -- Reset color to white
     love.graphics.setColor(1, 1, 1)
@@ -405,7 +412,9 @@ function game.loadChallengeRoom()
 
     killer.clear() -- Remove old killers
     platform.clear() -- Ensure old platforms are removed
-    killer.spawnRandom() -- Spawn a new killer
+    for i = 0, 1, 1 do
+        killer.spawnRandom() -- Spawn a new killer
+    end
 
     trajectory.calculate(player, platform.getPlatforms())
 end
