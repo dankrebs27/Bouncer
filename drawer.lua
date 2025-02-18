@@ -9,7 +9,7 @@ local tabWidth = 20
 local tabHeight = 40
 local tabX = drawerX - tabWidth
 local animationSpeed = 500
-local platformModule -- Reference to the platform module
+local platformModule
 
 local buttons = {
     { x = 0, y = 150, width = 50, height = 50, color = {0.5, 0.8, 1}, type = "ice" }, -- Ice platform
@@ -20,8 +20,19 @@ local buttons = {
 function drawer.init(platformRef, boonsRef)
     platformModule = platformRef
     boons = boonsRef -- Store reference to the boons module
-end
 
+    -- Get the actual window dimensions & vertically center drawer
+    local windowWidth, windowHeight = love.graphics.getDimensions()
+    drawerY = (windowHeight / 2) - (drawerHeight / 2)
+
+    -- Position the drawer fully off-screen (Closed by default)
+    drawerX = windowWidth  
+    drawerTargetX = drawerX  
+
+    -- Center the tab vertically relative to the full window
+    tabX = drawerX - tabWidth
+    tabY = (windowHeight / 2) - (tabHeight / 2)  -- Ensures tab is centered
+end
 
 function drawer.update(dt)
     if isOpen and drawerX > drawerTargetX then
@@ -36,14 +47,14 @@ end
 function drawer.draw()
     -- Draw the drawer background
     love.graphics.setColor(0.5, 0.5, 0.5)
-    love.graphics.rectangle("fill", drawerX, 0, drawerWidth, drawerHeight)
+    love.graphics.rectangle("fill", drawerX, drawerY, drawerWidth, drawerHeight)
 
     -- Draw the "Boons" label
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("Boons", drawerX + 10, 10, drawerWidth - 20, "center")
+    love.graphics.printf("Boons", drawerX + 10, drawerY + 10, drawerWidth - 20, "center")
 
     -- Draw active boon icons
-    local yOffset = 40 -- Start below the "Boons" label
+    local yOffset = drawerY + 40 -- Ensure icons start from the updated position
     for _, boon in ipairs(boons.list) do
         if boon.active and boon.icon then
             love.graphics.draw(boon.icon, drawerX + 50, yOffset, 0, 0.75, 0.75) -- Scale 75%
@@ -53,32 +64,33 @@ function drawer.draw()
 
     -- Draw the tab
     love.graphics.setColor(0.3, 0.3, 0.3)
-    love.graphics.rectangle("fill", tabX, (drawerHeight - tabHeight) / 2, tabWidth, tabHeight)
+    love.graphics.rectangle("fill", tabX, tabY, tabWidth, tabHeight)
 
     -- Draw the platform selection buttons
     for _, button in ipairs(buttons) do
         love.graphics.setColor(button.color)
-        love.graphics.rectangle("fill", drawerX + button.x + 25, button.y, button.width, button.height)
+        love.graphics.rectangle("fill", drawerX + button.x + 25, drawerY + button.y, button.width, button.height) -- ✅ Fix Y positioning
     end
 end
 
-
 function drawer.handleMouseClick(x, y)
     -- Check if the tab is clicked
-    if x >= tabX and x <= tabX + tabWidth and y >= (drawerHeight - tabHeight) / 2 and y <= (drawerHeight + tabHeight) / 2 then
+    if x >= tabX and x <= tabX + tabWidth and y >= tabY and y <= tabY + tabHeight then
         isOpen = not isOpen
-        drawerTargetX = isOpen and (800 - drawerWidth) or 800
+        drawerTargetX = isOpen and (love.graphics.getWidth() - drawerWidth) or love.graphics.getWidth()
         return true
     end
 
-    -- Check if any button is clicked
+    -- Check if any button inside the drawer is clicked
     for _, button in ipairs(buttons) do
         local buttonX = drawerX + button.x + 25
-        if x >= buttonX and x <= buttonX + button.width and y >= button.y and y <= button.y + button.height then
+        local buttonY = drawerY + button.y -- Adjust for the new centered drawer position
+
+        if x >= buttonX and x <= buttonX + button.width and y >= buttonY and y <= buttonY + button.height then
             -- Use the platform module to set the platform type
             if platformModule then
-                platformModule.setPlatformType(button.type) -- Correctly call setPlatformType
-                print("Platform type set to:", button.type) -- Debugging
+                platformModule.setPlatformType(button.type)
+                print("Platform type set to:", button.type)
                 return true
             else
                 print("Error: Platform module not initialized")
@@ -88,5 +100,6 @@ function drawer.handleMouseClick(x, y)
 
     return false
 end
+
 
 return drawer

@@ -56,6 +56,11 @@ function love.update(dt)
     if gameState == "play" then
         drawer.update(dt) -- Always update the drawer
         platform.update(dt)
+        if math.random() < 0.01 then -- Print only sometimes to avoid spam
+            print(dt)
+            print(love.timer.getFPS())
+            
+        end
         if not game.isPaused then
             game.update(dt)
             player.update(dt)

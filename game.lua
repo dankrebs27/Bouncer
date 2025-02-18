@@ -113,22 +113,31 @@ function game.generateRoomContents()
     end
 end
 
-function game.generateStars(seed)
-    if seed then
-        math.randomseed(seed)
-    else
-        math.randomseed(os.time())
-    end
-
+function game.generateStars()
     game.stars = {}
+
+    --local baseX = 400
+    --local baseY = 600
+    --local baseX = math.random(100, 700)  -- Pick a random starting x-position
+    --local baseY = math.random(100, 1000) -- Pick a random starting y-position
+
     for i = 1, 3 do
-        local x = math.random(50, 750)
-        local y = math.random(50, 1100) -- Updated to allow stars in the lower half
+        -- Offset each star randomly from the base position
+        local baseX = math.random(100, 700)  -- Pick a random starting x-position
+        local baseY = math.random(100, 1000) -- Pick a random starting y-position
+        local x = baseX + math.random(-500, 500) -- Random offset within a 500px range
+        local y = baseY + math.random(-500, 500) -- Random offset within a 500px range
+
+        -- Keep stars inside bounds
+        x = math.max(50, math.min(750, x))
+        y = math.max(80, math.min(1100, y))
+
         table.insert(game.stars, { x = x, y = y })
     end
 
     star.setPositions(game.stars)
 end
+
 
 
 function game.generateTargets()
@@ -161,9 +170,10 @@ end
 function game.update(dt)
     game.world:update(dt) -- First, update the physics world
 
-    if math.random() < 0.005 then -- Print only sometimes to avoid spam
+    if math.random() < 0.01 then -- Print only sometimes to avoid spam
         print("Memory usage (KB):", collectgarbage("count"))
         print(gameState)
+        print("Physics Bodies:", #game.world:getBodies())
     end
 
     if game.isPaused then

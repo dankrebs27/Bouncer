@@ -66,7 +66,7 @@ function trajectory.calculate(player, platforms)
             
             -- **Combine the platform and ball bounciness for a realistic bounce**
             local totalRestitution = platformRestitution * 2.5 --* ballRestitution
-            print("restitution: ", totalRestitution)
+            --print("restitution: ", totalRestitution)
         
             -- **Reflect velocity using physics-based bounce formula**
             local newVx = svx - (1 + totalRestitution) * dot * nearestCollision.nx
